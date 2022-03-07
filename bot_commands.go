@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	CommandStart     string = "start"
-	CommandHelp      string = "help"
-	CommandWish      string = "wish"
-	CommandWishlist  string = "wishlist"
-	CommandFulfilled string = "fulfilled"
+	CommandStart    string = "start"
+	CommandHelp     string = "help"
+	CommandWish     string = "wish"
+	CommandWishlist string = "wishlist"
+	CommandFulfill  string = "fulfill"
 )
 
 func addBotCommands(bot *tgbotapi.BotAPI) (*tgbotapi.APIResponse, error) {
@@ -31,7 +31,7 @@ func addBotCommands(bot *tgbotapi.BotAPI) (*tgbotapi.APIResponse, error) {
 			Description: "Shows wishes of someone",
 		},
 		tgbotapi.BotCommand{ // TODO don't know how to do this. by ID or string search or inline keyboard?
-			Command:     CommandFulfilled,
+			Command:     CommandFulfill,
 			Description: "Fulfills someones wish",
 		},
 	))

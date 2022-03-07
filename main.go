@@ -45,64 +45,95 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
 	updates := bot.GetUpdatesChan(u)
+
 	for update := range updates {
 
-		if update.Message == nil { // ignore any non-Message updates
+		if !update.Message.Chat.IsGroup() {
+			bot.Send(tgbotapi.NewMessage(
+				update.Message.Chat.ID,
+				"This bot can only be used in group chats",
+			))
 			continue
 		}
 
-		if !update.Message.IsCommand() { // ignore any non-command Messages
+		if update.CallbackQuery != nil {
+			handleCallbackQuery(bot, update)
 			continue
 		}
 
-		chatID := update.Message.Chat.ID
-		username := wishlist.Username(update.Message.From.UserName)
-		msg := ""
-
-		switch update.Message.Command() {
-		case CommandStart:
-			if !update.Message.Chat.IsGroup() {
-				msg = "This bot can only be used in group chats. I'm sorry :("
-			} else {
-				msg = "Ok, I'm in a group"
-			}
-		case CommandHelp:
-			msg = "Got help"
-		case CommandWish:
-			if err := wishlist.AddWish(chatID, username, &wishlist.Wish{
-				WishedAt: time.Now(),
-				Wish:     update.Message.CommandArguments(),
-			}); err != nil {
-				msg = err.Error()
-			} else {
-				msg = "Wish created :)"
-			}
-		case CommandWishlist:
-			// TODO add mechanism to show inline keyboard for whom to show the wishlist for
-			wishlist, err := wishlist.GetWishlist(chatID, username)
-			if err != nil {
-				msg = err.Error()
-			} else {
-				msg = fmt.Sprintf("*Wishlist for @%s*\n", username)
-				msg += wishlist.String()
-			}
-		case CommandFulfill:
-			wishID, err := strconv.Atoi(update.Message.CommandArguments())
-			if err != nil {
-				msg = "Argument must be an integer to the wish"
-			} else {
-				if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
-					msg = err.Error()
-				} else {
-					msg = fmt.Sprintf("Wish %d fulfilled :)", wishID)
-				}
-			}
+		if update.Message != nil && update.Message.IsCommand() { // ignore any non-command Messages
+			handleCommand(bot, update)
+			continue
 		}
-
-		mdMsg := tgbotapi.NewMessage(update.Message.Chat.ID, msg)
-		mdMsg.ParseMode = tgbotapi.ModeMarkdown
-		bot.Send(mdMsg)
 
 	}
+
+}
+
+func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+
+	chatID := update.CallbackQuery.Message.Chat.ID
+	//username := wishlist.Username(update.CallbackQuery.Message.From.UserName)
+	msg := tgbotapi.NewMessage(chatID, "")
+	msg.ParseMode = tgbotapi.ModeMarkdown
+
+	wishlist, err := wishlist.GetWishlist(chatID, wishlist.Username(update.CallbackQuery.Data))
+	if err != nil {
+		msg.Text = err.Error()
+	} else {
+		msg.Text = fmt.Sprintf("*Wishlist for @%s*\n", update.CallbackQuery.Data)
+		msg.Text += wishlist.String()
+	}
+
+	bot.Send(msg)
+	bot.Send(tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)) // this answers the callback query
+
+}
+
+func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+
+	chatID := update.Message.Chat.ID
+	username := wishlist.Username(update.Message.From.UserName)
+	msg := tgbotapi.NewMessage(chatID, "")
+	msg.ParseMode = tgbotapi.ModeMarkdown
+
+	switch update.Message.Command() {
+	case CommandStart:
+		msg.Text = "Not implemented" // TODO
+	case CommandHelp:
+		msg.Text = "Got help" // TODO
+	case CommandWish:
+		if err := wishlist.AddWish(chatID, username, &wishlist.Wish{
+			WishedAt: time.Now(),
+			Wish:     update.Message.CommandArguments(),
+		}); err != nil {
+			msg.Text = err.Error()
+		} else {
+			msg.Text = "Wish created :)"
+		}
+	case CommandWishlist:
+		users, err := wishlist.GetUsersWithWishes(chatID)
+		if err != nil {
+			msg.Text = err.Error()
+		} else {
+			msg.Text = "Which wishlist do you want to take a look at?" + "\n"
+			msg.Text += "_(users that are not listed do not have any wishes)_"
+			msg.ReplyMarkup = makeUsernameKeyboard(users...)
+			// see handleCallbackQuery to continue with this conversation
+		}
+	case CommandFulfill:
+		wishID, err := strconv.Atoi(update.Message.CommandArguments())
+		if err != nil {
+			msg.Text = "Argument must be an integer to the wish"
+		} else {
+			if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
+				msg.Text = err.Error()
+			} else {
+				msg.Text = fmt.Sprintf("Wish %d fulfilled :)", wishID)
+			}
+		}
+	}
+
+	bot.Send(msg)
 
 }

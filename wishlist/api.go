@@ -36,7 +36,6 @@ func AddWish(chatID int64, username Username, wish *Wish) error {
 }
 
 func FulfillWish(chatID int64, username Username, wishID int) error {
-
 	if wishID < 1 {
 		return errors.New("wish ID cannot be below 1")
 	}
@@ -60,5 +59,16 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	db.Wishes[username][realWishID].Fulfilled = true
 	db.Save()
 	return nil
+}
 
+func GetUsersWithWishes(chatID int64) ([]Username, error) {
+	db, err := loadChatDBFile(chatID)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]Username, 0)
+	for user := range db.Wishes {
+		users = append(users, user)
+	}
+	return users, nil
 }

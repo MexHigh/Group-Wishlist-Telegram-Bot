@@ -1,8 +1,6 @@
 package main
 
-import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-)
+import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 const (
 	CommandStart    string = "start"
@@ -30,7 +28,7 @@ func addBotCommands(bot *tgbotapi.BotAPI) (*tgbotapi.APIResponse, error) {
 			Command:     CommandWishlist,
 			Description: "Shows wishes of someone",
 		},
-		tgbotapi.BotCommand{ // TODO don't know how to do this. by ID or string search or inline keyboard?
+		tgbotapi.BotCommand{
 			Command:     CommandFulfill,
 			Description: "Fulfills someones wish",
 		},

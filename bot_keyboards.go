@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"git.leon.wtf/leon/group-wishlist-telegram-bot/wishlist"
@@ -27,18 +26,20 @@ func makeUsernameKeyboard(commandName string, usernames ...wishlist.Username) tg
 	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
 
-// makeWishKeyboard creates an InlineKeyboardMarkup that can be directly
+// makeWishlistKeyboard creates an InlineKeyboardMarkup that can be directly
 // assigned to msg.ReplyMarkup. Every Wish is listed in its own line.
 //
-// The callback data is composed like '/commandName/wishID'.
+// The callback data is composed like '/commandName/username.wishID'.
 // Use `extractCallbackData` to get the
-func makeWishKeyboard(commandName string, wishes ...wishlist.Wish) tgbotapi.InlineKeyboardMarkup {
+func makeWishlistKeyboard(commandName string, username wishlist.Username, wishes wishlist.Wishlist) tgbotapi.InlineKeyboardMarkup {
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
-	for wishID, wish := range wishes {
-		cbData := fmt.Sprintf("/%s/%d", commandName, wishID)
+	for realWishID, wish := range wishes {
+		wishID := realWishID + 1
+		text := fmt.Sprintf("%d. %s", wishID, wish.Wish)
+		cbData := fmt.Sprintf("/%s/%s.%d", commandName, string(username), wishID)
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(strconv.Itoa(wishID)+wish.Wish, cbData),
+				tgbotapi.NewInlineKeyboardButtonData(text, cbData),
 			),
 		)
 	}

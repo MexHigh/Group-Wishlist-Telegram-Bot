@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -38,7 +39,9 @@ type chatDBFile struct {
 }
 
 func (db *chatDBFile) Save() error {
-	p := path.Join("db", strconv.FormatInt(db.ChatID, 10)+".json")
+	f := strconv.FormatInt(db.ChatID, 10) + ".json"
+	f = strings.ReplaceAll(f, "-", "m") // replace negative sign with 'm'
+	p := path.Join("db", f)
 	jsonBytes, err := json.MarshalIndent(*db, "", "    ")
 	if err != nil {
 		return err
@@ -50,7 +53,9 @@ func (db *chatDBFile) Save() error {
 }
 
 func loadChatDBFile(chatID int64) (*chatDBFile, error) {
-	p := path.Join("db", strconv.FormatInt(chatID, 10)+".json")
+	f := strconv.FormatInt(chatID, 10) + ".json"
+	f = strings.ReplaceAll(f, "-", "m") // replace negative sign with 'm'
+	p := path.Join("db", f)
 	jsonFile, err := os.Open(p)
 	if err != nil {
 		return nil, errors.New("chat database does not exist for this chat")

@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//bot.Debug = true
+	bot.Debug = true
 
 	log.Println("Authorized on bot account @" + bot.Self.UserName)
 
@@ -48,7 +48,7 @@ func main() {
 
 	for update := range updates {
 
-		if !update.Message.Chat.IsGroup() {
+		if update.Message != nil && !update.Message.Chat.IsGroup() {
 			bot.Send(tgbotapi.NewMessage(
 				update.Message.Chat.ID,
 				"This bot can only be used in group chats",
@@ -73,17 +73,27 @@ func main() {
 func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	chatID := update.CallbackQuery.Message.Chat.ID
-	//username := wishlist.Username(update.CallbackQuery.Message.From.UserName)
 	msg := tgbotapi.NewMessage(chatID, "")
 	msg.ParseMode = tgbotapi.ModeMarkdown
 
-	wishlist, err := wishlist.GetWishlist(chatID, wishlist.Username(update.CallbackQuery.Data))
-	if err != nil {
-		msg.Text = err.Error()
-	} else {
-		msg.Text = fmt.Sprintf("*Wishlist for @%s*\n", update.CallbackQuery.Data)
-		msg.Text += wishlist.String()
+	commandName, cbDataPayload := extractCallbackData(update.CallbackData())
+
+	switch commandName {
+	case CommandWishlist:
+		wishlist, err := wishlist.GetWishlist(chatID, wishlist.Username(cbDataPayload))
+		if err != nil {
+			msg.Text = err.Error()
+		} else {
+			msg.Text = fmt.Sprintf("*Wishlist for @%s*\n", cbDataPayload)
+			msg.Text += wishlist.String()
+		}
 	}
+
+	// remove markup (inline keyboard) (unused as it does not make any sense to only remove the keyboard)
+	/*editMarkup := tgbotapi.NewEditMessageReplyMarkup(chatID, update.CallbackQuery.Message.MessageID, tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: make([][]tgbotapi.InlineKeyboardButton, 0),
+	})
+	bot.Send(editMarkup)*/
 
 	bot.Send(msg)
 	bot.Send(tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)) // this answers the callback query
@@ -118,7 +128,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		} else {
 			msg.Text = "Which wishlist do you want to take a look at?" + "\n"
 			msg.Text += "_(users that are not listed do not have any wishes)_"
-			msg.ReplyMarkup = makeUsernameKeyboard(users...)
+			msg.ReplyMarkup = makeUsernameKeyboard(CommandWishlist, users...)
 			// see handleCallbackQuery to continue with this conversation
 		}
 	case CommandFulfill:

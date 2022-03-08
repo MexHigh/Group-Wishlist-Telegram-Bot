@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
 type Username string
@@ -25,7 +27,7 @@ func (w *Wishlist) String() (s string) {
 	for i, wish := range *w {
 		s += fmt.Sprintf("*%d.* %s", i+1, wish.Wish)
 		if wish.Fulfilled {
-			s += " _(fulfilled)_"
+			s += " " + t.G("_(fulfilled)_")
 		}
 		s += "\n"
 	}
@@ -67,7 +69,7 @@ func loadChatDBFile(chatID int64) (*chatDBFile, error) {
 	if err != nil {
 		return nil, &NoDatabaseForChatError{
 			GenericWishlistError{
-				Msg: "No one in this chat has made a wish yet.\nUse `/wish` to add one.",
+				Msg: t.G("No one in this chat has made a wish yet.\nUse `/wish` to add one."),
 				Err: err,
 			},
 		}

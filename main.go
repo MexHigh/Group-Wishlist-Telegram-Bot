@@ -37,7 +37,10 @@ func main() {
 		panic(err)
 	}
 	log.Println("Authorized on bot account @" + bot.Self.UserName)
-	//bot.Debug = true
+
+	if conf.Debug {
+		bot.Debug = true
+	}
 
 	log.Println("Setting bot commands")
 	if _, err := addBotCommands(bot); err != nil {
@@ -52,7 +55,7 @@ func main() {
 		if update.Message != nil && !update.Message.Chat.IsGroup() {
 			bot.Send(tgbotapi.NewMessage(
 				update.Message.Chat.ID,
-				t.G("only in group chats"),
+				t.G("This bot can only be used in group chats"),
 			))
 			continue
 		}
@@ -153,9 +156,15 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		if err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = t.G("Which wish of yours do you want to mark as fulfilled?")
-			msg.ReplyMarkup = makeWishlistKeyboard(CommandFulfill, username, list)
-			// see handleCallbackQuery to continue with this conversation
+			wlk := makeWishlistKeyboard(CommandFulfill, username, true, list)
+			if len(wlk.InlineKeyboard) == 0 { // when all wishes are fulfilled
+				msg.Text = t.G("All your wishes were already fulfilled")
+			} else {
+				msg.Text = t.G("Which wish of yours do you want to mark as fulfilled?")
+				msg.Text += t.G("_(unlisted wishes were already fulfilled)_")
+				msg.ReplyMarkup = wlk
+				// see handleCallbackQuery to continue with this conversation
+			}
 		}
 	}
 

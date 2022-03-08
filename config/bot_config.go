@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	BotToken string `json:"bot_token"`
+	Debug    bool   `json:"debug"`
 }
 
 func LoadConfig(path string) (*Config, error) {

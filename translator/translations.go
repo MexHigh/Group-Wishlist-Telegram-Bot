@@ -4,6 +4,7 @@ var translations map[string]map[Language]string
 
 func init() {
 	translations = map[string]map[Language]string{
+		// GENERICS START //
 		"test": {
 			"en": "Test string in english",
 			"de": "Test string auf Deutsch",
@@ -12,6 +13,9 @@ func init() {
 			"en": "Not implemented yet",
 			"de": "Noch nicht implementiert",
 		},
+		// GENERICS END //
+
+		// BOT COMMANDS START //
 		"command_help": {
 			"en": "help",
 			"de": "hilfe",
@@ -44,6 +48,9 @@ func init() {
 			"en": "Fulfills one own wish",
 			"de": "Erfüllt einen eigenen Wunsch",
 		},
+		// BOT COMMANDS END //
+
+		// NORMAL TRANSLATIONS START //
 		"This bot can only be used in group chats": {
 			"en": "This bot can only be used in group chats",
 			"de": "Dieser Bot kann nur in Gruppenchats verwendet werden",
@@ -76,9 +83,46 @@ func init() {
 			"en": "_(users that are not listed do not have any wishes)_",
 			"de": "_(Benutzer, die nicht gelistet sind, haben noch keine Wünsche geäußert)_",
 		},
+		"All your wishes were already fulfilled": {
+			"en": "All your wishes were already fulfilled",
+			"de": "Alle deine Wünsche wurden bereits erfüllt",
+		},
 		"Which wish of yours do you want to mark as fulfilled?": {
 			"en": "Which wish of yours do you want to mark as fulfilled?",
 			"de": "Welchen deiner Wünsche möchtest du als erfüllt markieren?",
 		},
+		"_(unlisted wishes were already fulfilled)_": {
+			"en": "_(unlisted wishes were already fulfilled)_",
+			"de": "_(ungelistete Wünsche wurden bereits erfüllt)_",
+		},
+		"User @%s has not expressed any wishes yet": {
+			"en": "User @%s has not expressed any wishes yet",
+			"de": "Benutzer @%s hat bisher noch keine Wünsche geäußert",
+		},
+		"Wish ID cannot be below 1": {
+			"en": "Wish ID cannot be below 1",
+			"de": "Wunsch ID kann nicht kleiner als 1 sein",
+		},
+		"Wishlist does not exist for user @%s": {
+			"en": "Wishlist does not exist for user @%s",
+			"de": "Wunschlist existiert nicht für Benutzer @%s",
+		},
+		"Wish %d does not exist": {
+			"en": "Wish %d does not exist",
+			"de": "Wunsch %d existiert nicht",
+		},
+		"Wish %d is already fulfilled": {
+			"en": "Wish %d is already fulfilled",
+			"de": "Wunsch %d wurde bereits erfüllt",
+		},
+		"No one in this chat has made a wish yet.\nUse `/wish` to add one.": {
+			"en": "No one in this chat has made a wish yet.\nUse `/wish` to add one.",
+			"de": "Niemand in diesem Chat hat bisher einen Wunsch geäußert.\nBenutze `/wunsch` um einen hinzuzufügen.",
+		},
+		"_(fulfilled)_": {
+			"en": "_(fulfilled)_",
+			"de": "_(erfüllt)_",
+		},
+		// NORMAL TRANSLATIONS END //
 	}
 }

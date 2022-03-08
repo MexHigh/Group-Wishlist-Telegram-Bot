@@ -31,9 +31,12 @@ func makeUsernameKeyboard(commandName string, usernames ...wishlist.Username) tg
 //
 // The callback data is composed like '/commandName/username.wishID'.
 // Use `extractCallbackData` to get the
-func makeWishlistKeyboard(commandName string, username wishlist.Username, wishes wishlist.Wishlist) tgbotapi.InlineKeyboardMarkup {
+func makeWishlistKeyboard(commandName string, username wishlist.Username, skipFulfilled bool, wishes wishlist.Wishlist) tgbotapi.InlineKeyboardMarkup {
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
 	for realWishID, wish := range wishes {
+		if skipFulfilled && wish.Fulfilled {
+			continue
+		}
 		wishID := realWishID + 1
 		text := fmt.Sprintf("%d. %s", wishID, wish.Wish)
 		cbData := fmt.Sprintf("/%s/%s.%d", commandName, string(username), wishID)

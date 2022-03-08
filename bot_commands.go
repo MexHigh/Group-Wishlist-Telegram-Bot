@@ -13,10 +13,6 @@ var (
 	CommandFulfill  string
 )
 
-func init() {
-
-}
-
 func addBotCommands(bot *tgbotapi.BotAPI) (*tgbotapi.APIResponse, error) {
 	// initialitze the constants
 	CommandHelp = t.G("command_help")

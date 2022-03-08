@@ -2,7 +2,8 @@ package wishlist
 
 import (
 	"errors"
-	"fmt"
+
+	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
 func GetWishlist(chatID int64, username Username) (Wishlist, error) {
@@ -14,7 +15,7 @@ func GetWishlist(chatID int64, username Username) (Wishlist, error) {
 	if !ok {
 		return nil, &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: fmt.Sprintf("User %s has not expressed any wishes yet", string(username)),
+				Msg: t.G("User @%s has not expressed any wishes yet", string(username)),
 				Err: nil,
 			},
 		}
@@ -46,7 +47,7 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	if wishID < 1 {
 		return &WishIDInvalidError{
 			GenericWishlistError{
-				Msg: "Wish ID cannot be below 1",
+				Msg: t.G("Wish ID cannot be below 1"),
 				Err: nil,
 			},
 		}
@@ -61,21 +62,21 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	if !ok {
 		return &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: fmt.Sprintf("Wishlist does not exist for user %s", string(username)),
+				Msg: t.G("Wishlist does not exist for user @%s", string(username)),
 			},
 		}
 	}
 	if len(wishes) <= realWishID {
 		return &WishDoesNotExistError{
 			GenericWishlistError{
-				Msg: fmt.Sprintf("Wish %d does not exist", wishID),
+				Msg: t.G("Wish %d does not exist", wishID),
 			},
 		}
 	}
 	if wishes[realWishID].Fulfilled {
 		return &WishAlreadyFulfilledError{
 			GenericWishlistError{
-				Msg: fmt.Sprintf("Wish %d is already fulfilled", wishID),
+				Msg: t.G("Wish %d is already fulfilled", wishID),
 			},
 		}
 	}

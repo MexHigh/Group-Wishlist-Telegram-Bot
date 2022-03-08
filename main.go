@@ -2,35 +2,37 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 
 	"git.leon.wtf/leon/group-wishlist-telegram-bot/config"
+	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 	"git.leon.wtf/leon/group-wishlist-telegram-bot/wishlist"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var (
-	configPath *string        = flag.String("config", "./config.json", "Path to the config.json file")
-	Config     *config.Config = nil
+	configPath *string = flag.String("config", "./config.json", "Path to the config.json file")
+	language   *string = flag.String("language", "de", "Language of the bot ('en' or 'de')")
 )
+
+func init() {
+	flag.Parse()
+	t.SetLanguage(t.Language(*language))
+}
 
 func main() {
 
-	flag.Parse()
-
 	log.Println("Loading config from", *configPath)
-	confTemp, err := config.LoadConfig(*configPath)
+	conf, err := config.LoadConfig(*configPath)
 	if err != nil {
 		panic(err)
 	}
-	Config = confTemp // assign to global value
 
-	bot, err := tgbotapi.NewBotAPI(Config.BotToken)
+	bot, err := tgbotapi.NewBotAPI(conf.BotToken)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +52,7 @@ func main() {
 		if update.Message != nil && !update.Message.Chat.IsGroup() {
 			bot.Send(tgbotapi.NewMessage(
 				update.Message.Chat.ID,
-				"This bot can only be used in group chats",
+				t.G("only in group chats"),
 			))
 			continue
 		}
@@ -82,7 +84,7 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		if err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = fmt.Sprintf("*Wishlist for @%s*", cbDataPayload) + "\n"
+			msg.Text = t.G("*Wishlist for @%s*", cbDataPayload) + "\n"
 			msg.Text += wishlist.String()
 		}
 	case CommandFulfill: // callback payload format: username.wishID
@@ -96,7 +98,7 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = fmt.Sprintf("Wish %d marked as fulfilled", wishID)
+			msg.Text = t.G("Wish %d marked as fulfilled", wishID)
 		}
 	}
 
@@ -120,12 +122,12 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	switch update.Message.Command() {
 	case CommandHelp:
-		msg.Text = "Not implemented yet" // TODO
+		msg.Text = t.G("Not implemented yet") // TODO
 	case CommandWish:
 		args := update.Message.CommandArguments()
 		if args == "" {
-			msg.Text = "Please provide your wish with your command!" + "\n"
-			msg.Text += "Example: `/wish Diamond necklace`"
+			msg.Text = t.G("Please provide your wish with your command!") + "\n"
+			msg.Text += t.G("Example: `/wish Diamond necklace`")
 			break
 		}
 		if err := wishlist.AddWish(chatID, username, &wishlist.Wish{
@@ -134,15 +136,15 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		}); err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = "Wish created"
+			msg.Text = t.G("Wish created")
 		}
 	case CommandWishlist:
 		users, err := wishlist.GetUsersWithWishes(chatID)
 		if err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = "Which wishlist do you want to take a look at?" + "\n"
-			msg.Text += "_(users that are not listed do not have any wishes)_"
+			msg.Text = t.G("Which wishlist do you want to take a look at?") + "\n"
+			msg.Text += t.G("_(users that are not listed do not have any wishes)_")
 			msg.ReplyMarkup = makeUsernameKeyboard(CommandWishlist, users...)
 			// see handleCallbackQuery to continue with this conversation
 		}
@@ -151,7 +153,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		if err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = "Which wish of yours do you want to mark as fulfilled?"
+			msg.Text = t.G("Which wish of yours do you want to mark as fulfilled?")
 			msg.ReplyMarkup = makeWishlistKeyboard(CommandFulfill, username, list)
 			// see handleCallbackQuery to continue with this conversation
 		}

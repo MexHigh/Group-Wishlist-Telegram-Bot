@@ -52,12 +52,3 @@ func extractCallbackData(cbData string) (string, string) {
 	s := strings.Split(cbData, "/")
 	return s[1], s[2]
 }
-
-// matchCallbackCommandName returns only the command name
-// for which callback data was returned.
-//
-// This can be useful for switch case statements.
-func matchCallbackCommandName(cbData string) string {
-	command, _ := extractCallbackData(cbData)
-	return command
-}

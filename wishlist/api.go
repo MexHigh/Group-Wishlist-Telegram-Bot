@@ -12,32 +12,44 @@ func GetWishlist(chatID int64, username Username) (Wishlist, error) {
 	}
 	wishlist, ok := db.Wishes[username]
 	if !ok {
-		return nil, errors.New("wishlist does not exist for user " + string(username))
+		return nil, &NoWishesForUserError{
+			GenericWishlistError{
+				Msg: fmt.Sprintf("User %s has not expressed any wishes yet", string(username)),
+				Err: nil,
+			},
+		}
 	}
 	return wishlist, nil
-}
-
-func GetWish(chatID int64, username Username, wishID int) *Wish {
-	return nil // TODO not implemented (unused)
 }
 
 func AddWish(chatID int64, username Username, wish *Wish) error {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
-		// create a new DB file if it does not exist already
-		db = &chatDBFile{
-			ChatID: chatID,
-			Wishes: make(map[Username]Wishlist),
+		var e *NoDatabaseForChatError
+		if errors.As(err, &e) { // create a new DB file if it does not exist already
+			db = &chatDBFile{
+				ChatID: chatID,
+				Wishes: make(map[Username]Wishlist),
+			}
+		} else {
+			return err
 		}
 	}
 	db.Wishes[username] = append(db.Wishes[username], wish)
-	db.Save()
+	if err := db.Save(); err != nil {
+		return err
+	}
 	return nil
 }
 
 func FulfillWish(chatID int64, username Username, wishID int) error {
 	if wishID < 1 {
-		return errors.New("wish ID cannot be below 1")
+		return &WishIDInvalidError{
+			GenericWishlistError{
+				Msg: "Wish ID cannot be below 1",
+				Err: nil,
+			},
+		}
 	}
 	realWishID := wishID - 1 // indexing at 0
 
@@ -47,17 +59,31 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	}
 	wishes, ok := db.Wishes[username]
 	if !ok {
-		return fmt.Errorf("wishlist does not exist for user %s", string(username))
+		return &NoWishesForUserError{
+			GenericWishlistError{
+				Msg: fmt.Sprintf("Wishlist does not exist for user %s", string(username)),
+			},
+		}
 	}
 	if len(wishes) <= realWishID {
-		return fmt.Errorf("wish %d does not exist", wishID)
+		return &WishDoesNotExistError{
+			GenericWishlistError{
+				Msg: fmt.Sprintf("Wish %d does not exist", wishID),
+			},
+		}
 	}
 	if wishes[realWishID].Fulfilled {
-		return fmt.Errorf("wish %d is already fulfilled", wishID)
+		return &WishAlreadyFulfilledError{
+			GenericWishlistError{
+				Msg: fmt.Sprintf("Wish %d is already fulfilled", wishID),
+			},
+		}
 	}
 
 	db.Wishes[username][realWishID].Fulfilled = true
-	db.Save()
+	if err := db.Save(); err != nil {
+		return err
+	}
 	return nil
 }
 

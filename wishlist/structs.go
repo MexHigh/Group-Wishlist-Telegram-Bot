@@ -2,7 +2,6 @@ package wishlist
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -44,10 +43,18 @@ func (db *chatDBFile) Save() error {
 	p := path.Join("db", f)
 	jsonBytes, err := json.MarshalIndent(*db, "", "    ")
 	if err != nil {
-		return err
+		return &InternalError{
+			GenericWishlistError{
+				Err: err,
+			},
+		}
 	}
 	if err := os.WriteFile(p, jsonBytes, 0644); err != nil {
-		return err
+		return &InternalError{
+			GenericWishlistError{
+				Err: err,
+			},
+		}
 	}
 	return nil
 }
@@ -58,15 +65,28 @@ func loadChatDBFile(chatID int64) (*chatDBFile, error) {
 	p := path.Join("db", f)
 	jsonFile, err := os.Open(p)
 	if err != nil {
-		return nil, errors.New("chat database does not exist for this chat")
+		return nil, &NoDatabaseForChatError{
+			GenericWishlistError{
+				Msg: "No one in this chat has made a wish yet.\nUse `/wish` to add one.",
+				Err: err,
+			},
+		}
 	}
 	jsonBytes, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		return nil, err
+		return nil, &InternalError{
+			GenericWishlistError{
+				Err: err,
+			},
+		}
 	}
 	db := chatDBFile{}
 	if err := json.Unmarshal(jsonBytes, &db); err != nil {
-		return nil, err
+		return nil, &InternalError{
+			GenericWishlistError{
+				Err: err,
+			},
+		}
 	}
 	return &db, nil
 }

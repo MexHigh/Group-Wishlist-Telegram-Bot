@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 	log.Println("Authorized on bot account @" + bot.Self.UserName)
-	bot.Debug = true
+	//bot.Debug = true
 
 	log.Println("Setting bot commands")
 	if _, err := addBotCommands(bot); err != nil {
@@ -96,7 +96,7 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = fmt.Sprintf("Wish %d fulfilled :)", wishID)
+			msg.Text = fmt.Sprintf("Wish %d marked as fulfilled", wishID)
 		}
 	}
 
@@ -119,10 +119,8 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	msg.ParseMode = tgbotapi.ModeMarkdown
 
 	switch update.Message.Command() {
-	case CommandStart:
-		msg.Text = "Not implemented" // TODO
 	case CommandHelp:
-		msg.Text = "Got help" // TODO
+		msg.Text = "Not implemented yet" // TODO
 	case CommandWish:
 		args := update.Message.CommandArguments()
 		if args == "" {
@@ -136,7 +134,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		}); err != nil {
 			msg.Text = beautifulError(err)
 		} else {
-			msg.Text = "Wish created :)"
+			msg.Text = "Wish created"
 		}
 	case CommandWishlist:
 		users, err := wishlist.GetUsersWithWishes(chatID)

@@ -13,16 +13,24 @@ import (
 	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
+type UserInfo struct {
+	ID       int64
+	Username string
+}
+
 type Wish struct {
 	WishedAt  time.Time `json:"wished_at"`
 	Wish      string    `json:"wish"`
 	Fulfilled bool      `json:"fulfilled"`
 }
 
-type Wishlist []*Wish
+type Wishlist struct {
+	Username string  `json:"username"`
+	Wishes   []*Wish `json:"wishes"`
+}
 
 func (w *Wishlist) String() (s string) {
-	for i, wish := range *w {
+	for i, wish := range w.Wishes {
 		s += fmt.Sprintf("*%d.* %s", i+1, wish.Wish)
 		if wish.Fulfilled {
 			s += " " + t.G("_(fulfilled)_")
@@ -33,8 +41,8 @@ func (w *Wishlist) String() (s string) {
 }
 
 type chatDBFile struct {
-	ChatID int64               `json:"group_id"`
-	Wishes map[string]Wishlist `json:"wishes"`
+	ChatID    int64               `json:"group_id"`
+	Wishlists map[int64]*Wishlist `json:"wishlists"`
 }
 
 func (db *chatDBFile) Save() error {

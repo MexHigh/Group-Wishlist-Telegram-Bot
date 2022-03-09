@@ -2,20 +2,21 @@ package wishlist
 
 import (
 	"errors"
+	"log"
 
 	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
-func GetWishlist(chatID int64, username string) (Wishlist, error) {
+func GetWishlist(chatID int64, userInfo UserInfo) (*Wishlist, error) {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		return nil, err
 	}
-	wishlist, ok := db.Wishes[username]
+	wishlist, ok := db.Wishlists[userInfo.ID]
 	if !ok {
 		return nil, &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: t.G("User %s has not expressed any wishes yet", string(username)),
+				Msg: t.G("User %s has not expressed any wishes yet", userInfo.Username),
 				Err: nil,
 			},
 		}
@@ -23,27 +24,50 @@ func GetWishlist(chatID int64, username string) (Wishlist, error) {
 	return wishlist, nil
 }
 
-func AddWish(chatID int64, username string, wish *Wish) error {
+func AddWish(chatID int64, userInfo UserInfo, wish *Wish) error {
+
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		var e *NoDatabaseForChatError
 		if errors.As(err, &e) { // create a new DB file if it does not exist already
 			db = &chatDBFile{
-				ChatID: chatID,
-				Wishes: make(map[string]Wishlist),
+				ChatID:    chatID,
+				Wishlists: make(map[int64]*Wishlist),
 			}
 		} else {
 			return err
 		}
 	}
-	db.Wishes[username] = append(db.Wishes[username], wish)
+
+	// get a copy of the existing wishlist
+	copyWishlist, ok := db.Wishlists[userInfo.ID]
+	if !ok { // there is no wishlist for this user
+		copyWishlist = &Wishlist{
+			Username: userInfo.Username,
+			// Wishes will be initializes in the next step
+		}
+	}
+	if copyWishlist.Wishes == nil { // create wishlist if it does not exist already
+		copyWishlist.Wishes = make([]*Wish, 0)
+	}
+	copyWishlist.Wishes = append(copyWishlist.Wishes, wish)
+	// check if the username is still the same and update if, if it is not
+	if userInfo.Username != copyWishlist.Username {
+		log.Printf("Discovered username update: '%s' > '%s'", copyWishlist.Username, userInfo.Username)
+		copyWishlist.Username = userInfo.Username
+	}
+	// assign the new copyWishlist back to the db struct
+	db.Wishlists[userInfo.ID] = copyWishlist
+
+	// save the db struct
 	if err := db.Save(); err != nil {
 		return err
 	}
 	return nil
+
 }
 
-func FulfillWish(chatID int64, username string, wishID int) error {
+func FulfillWish(chatID int64, userInfo UserInfo, wishID int) error {
 	if wishID < 1 {
 		return &WishIDInvalidError{
 			GenericWishlistError{
@@ -58,22 +82,22 @@ func FulfillWish(chatID int64, username string, wishID int) error {
 	if err != nil {
 		return err
 	}
-	wishes, ok := db.Wishes[username]
+	wishlist, ok := db.Wishlists[userInfo.ID]
 	if !ok {
 		return &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: t.G("Wishlist does not exist for user %s", username),
+				Msg: t.G("Wishlist does not exist for user %s", userInfo.Username),
 			},
 		}
 	}
-	if len(wishes) <= realWishID {
+	if len(wishlist.Wishes) <= realWishID {
 		return &WishDoesNotExistError{
 			GenericWishlistError{
 				Msg: t.G("Wish %d does not exist", wishID),
 			},
 		}
 	}
-	if wishes[realWishID].Fulfilled {
+	if wishlist.Wishes[realWishID].Fulfilled {
 		return &WishAlreadyFulfilledError{
 			GenericWishlistError{
 				Msg: t.G("Wish %d is already fulfilled", wishID),
@@ -81,21 +105,24 @@ func FulfillWish(chatID int64, username string, wishID int) error {
 		}
 	}
 
-	db.Wishes[username][realWishID].Fulfilled = true
+	db.Wishlists[userInfo.ID].Wishes[realWishID].Fulfilled = true
 	if err := db.Save(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetUsersWithWishes(chatID int64) ([]string, error) {
+func GetUsersWithWishes(chatID int64) ([]*UserInfo, error) {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]string, 0)
-	for user := range db.Wishes {
-		users = append(users, user)
+	userInfos := make([]*UserInfo, 0)
+	for userID, data := range db.Wishlists {
+		userInfos = append(userInfos, &UserInfo{
+			ID:       userID,
+			Username: data.Username,
+		})
 	}
-	return users, nil
+	return userInfos, nil
 }

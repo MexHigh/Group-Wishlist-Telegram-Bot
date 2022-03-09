@@ -82,23 +82,45 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	msg.ParseMode = tgbotapi.ModeMarkdown
 
 	switch commandName {
-	case CommandWishlist: // callback payload format: username
-		wishlist, err := wishlist.GetWishlist(chatID, cbDataPayload)
-		if err != nil {
-			msg.Text = err.Error()
-		} else {
-			msg.Text = t.G("*Wishlist for %s*", cbDataPayload) + "\n"
-			msg.Text += wishlist.String()
-		}
-	case CommandFulfill: // callback payload format: username.wishID
+	case CommandWishlist: // callback payload format: userID.username
 		split := strings.Split(cbDataPayload, ".")
-		username := split[0]
-		wishID, err := strconv.Atoi(split[1])
+		userIDStr := split[0]
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
 		if err != nil {
 			msg.Text = err.Error()
 			break
 		}
-		if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
+		username := split[1]
+
+		wishlist, err := wishlist.GetWishlist(chatID, wishlist.UserInfo{
+			ID:       userID,
+			Username: username,
+		})
+		if err != nil {
+			msg.Text = err.Error()
+		} else {
+			msg.Text = t.G("*Wishlist for %s*", username) + "\n"
+			msg.Text += wishlist.String()
+		}
+	case CommandFulfill: // callback payload format: userID.username.wishID
+		split := strings.Split(cbDataPayload, ".")
+		userIDStr := split[0]
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err != nil {
+			msg.Text = err.Error()
+			break
+		}
+		username := split[1]
+		wishID, err := strconv.Atoi(split[2])
+		if err != nil {
+			msg.Text = err.Error()
+			break
+		}
+
+		if err := wishlist.FulfillWish(chatID, wishlist.UserInfo{
+			ID:       userID,
+			Username: username,
+		}, wishID); err != nil {
 			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Wish %d marked as fulfilled", wishID)
@@ -119,13 +141,16 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	chatID := update.Message.Chat.ID
+	userID := update.Message.From.ID
 	username := firstAccountInfoAvailable(update.Message.From)
 	msg := tgbotapi.NewMessage(chatID, "")
 	msg.ParseMode = tgbotapi.ModeMarkdown
 
 	switch update.Message.Command() {
+
 	case CommandHelp:
 		msg.Text = t.G("Not implemented yet") // TODO
+
 	case CommandWish:
 		args := update.Message.CommandArguments()
 		if args == "" {
@@ -133,30 +158,50 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			msg.Text += t.G("Example: `/wish Diamond necklace`")
 			break
 		}
-		if err := wishlist.AddWish(chatID, username, &wishlist.Wish{
-			WishedAt: time.Now(),
-			Wish:     args,
-		}); err != nil {
+		if err := wishlist.AddWish(
+			chatID,
+			wishlist.UserInfo{
+				ID:       userID,
+				Username: username,
+			},
+			&wishlist.Wish{
+				WishedAt: time.Now(),
+				Wish:     args,
+			},
+		); err != nil {
 			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Wish created")
 		}
+
 	case CommandWishlist:
-		users, err := wishlist.GetUsersWithWishes(chatID)
+		userInfos, err := wishlist.GetUsersWithWishes(chatID)
 		if err != nil {
 			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Which wishlist do you want to take a look at?") + "\n"
 			msg.Text += t.G("_(users that are not listed do not have any wishes)_")
-			msg.ReplyMarkup = makeUsernameKeyboard(CommandWishlist, users...)
+			msg.ReplyMarkup = makeUsernameKeyboard(CommandWishlist, userInfos...)
 			// see handleCallbackQuery to continue with this conversation
 		}
+
 	case CommandFulfill:
-		list, err := wishlist.GetWishlist(chatID, username)
+		list, err := wishlist.GetWishlist(chatID, wishlist.UserInfo{
+			ID:       userID,
+			Username: username,
+		})
 		if err != nil {
 			msg.Text = err.Error()
 		} else {
-			wlk := makeWishlistKeyboard(CommandFulfill, username, true, list)
+			wlk := makeWishlistKeyboard(
+				CommandFulfill,
+				wishlist.UserInfo{
+					ID:       userID,
+					Username: username,
+				},
+				true, // skip fulfilled wishes
+				list,
+			)
 			if len(wlk.InlineKeyboard) == 0 { // when all wishes are fulfilled
 				msg.Text = t.G("All your wishes were already fulfilled")
 			} else {
@@ -166,6 +211,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 				// see handleCallbackQuery to continue with this conversation
 			}
 		}
+
 	}
 
 	bot.Send(msg)

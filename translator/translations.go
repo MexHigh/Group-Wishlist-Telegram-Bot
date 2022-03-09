@@ -9,7 +9,7 @@ func init() {
 			"en": "Test string in english",
 			"de": "Test string auf Deutsch",
 		},
-		"not implemented": {
+		"Not implemented yet": {
 			"en": "Not implemented yet",
 			"de": "Noch nicht implementiert",
 		},

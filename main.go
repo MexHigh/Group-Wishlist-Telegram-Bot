@@ -85,7 +85,7 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	case CommandWishlist: // callback payload format: username
 		wishlist, err := wishlist.GetWishlist(chatID, wishlist.Username(cbDataPayload))
 		if err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("*Wishlist for @%s*", cbDataPayload) + "\n"
 			msg.Text += wishlist.String()
@@ -95,11 +95,11 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		username := wishlist.Username(split[0])
 		wishID, err := strconv.Atoi(split[1])
 		if err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 			break
 		}
 		if err := wishlist.FulfillWish(chatID, username, wishID); err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Wish %d marked as fulfilled", wishID)
 		}
@@ -137,14 +137,14 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			WishedAt: time.Now(),
 			Wish:     args,
 		}); err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Wish created")
 		}
 	case CommandWishlist:
 		users, err := wishlist.GetUsersWithWishes(chatID)
 		if err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 		} else {
 			msg.Text = t.G("Which wishlist do you want to take a look at?") + "\n"
 			msg.Text += t.G("_(users that are not listed do not have any wishes)_")
@@ -154,7 +154,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	case CommandFulfill:
 		list, err := wishlist.GetWishlist(chatID, username)
 		if err != nil {
-			msg.Text = beautifulError(err)
+			msg.Text = err.Error()
 		} else {
 			wlk := makeWishlistKeyboard(CommandFulfill, username, true, list)
 			if len(wlk.InlineKeyboard) == 0 { // when all wishes are fulfilled

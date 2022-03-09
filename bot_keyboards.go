@@ -13,13 +13,13 @@ import (
 // assigned to msg.ReplyMarkup. Every User is listed in its own line.
 //
 // The callback data is composed like '/commandName/username'
-func makeUsernameKeyboard(commandName string, usernames ...wishlist.Username) tgbotapi.InlineKeyboardMarkup {
+func makeUsernameKeyboard(commandName string, usernames ...string) tgbotapi.InlineKeyboardMarkup {
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
 	for _, username := range usernames {
-		cbData := fmt.Sprintf("/%s/%s", commandName, string(username))
+		cbData := fmt.Sprintf("/%s/%s", commandName, username)
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("@"+string(username), cbData),
+				tgbotapi.NewInlineKeyboardButtonData(username, cbData),
 			),
 		)
 	}
@@ -31,7 +31,7 @@ func makeUsernameKeyboard(commandName string, usernames ...wishlist.Username) tg
 //
 // The callback data is composed like '/commandName/username.wishID'.
 // Use `extractCallbackData` to get the
-func makeWishlistKeyboard(commandName string, username wishlist.Username, skipFulfilled bool, wishes wishlist.Wishlist) tgbotapi.InlineKeyboardMarkup {
+func makeWishlistKeyboard(commandName string, username string, skipFulfilled bool, wishes wishlist.Wishlist) tgbotapi.InlineKeyboardMarkup {
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
 	for realWishID, wish := range wishes {
 		if skipFulfilled && wish.Fulfilled {

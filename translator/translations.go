@@ -55,9 +55,9 @@ func init() {
 			"en": "This bot can only be used in group chats",
 			"de": "Dieser Bot kann nur in Gruppenchats verwendet werden",
 		},
-		"*Wishlist for @%s*": {
-			"en": "*Wishlist for @%s*",
-			"de": "*Wunschliste für @%s*",
+		"*Wishlist for %s*": {
+			"en": "*Wishlist for %s*",
+			"de": "*Wunschliste für %s*",
 		},
 		"Wish %d marked as fulfilled": {
 			"en": "Wish %d marked as fulfilled",
@@ -95,17 +95,17 @@ func init() {
 			"en": "_(unlisted wishes were already fulfilled)_",
 			"de": "_(ungelistete Wünsche wurden bereits erfüllt)_",
 		},
-		"User @%s has not expressed any wishes yet": {
-			"en": "User @%s has not expressed any wishes yet",
-			"de": "Benutzer @%s hat bisher noch keine Wünsche geäußert",
+		"User %s has not expressed any wishes yet": {
+			"en": "User %s has not expressed any wishes yet",
+			"de": "Benutzer %s hat bisher noch keine Wünsche geäußert",
 		},
 		"Wish ID cannot be below 1": {
 			"en": "Wish ID cannot be below 1",
 			"de": "Wunsch ID kann nicht kleiner als 1 sein",
 		},
-		"Wishlist does not exist for user @%s": {
-			"en": "Wishlist does not exist for user @%s",
-			"de": "Wunschlist existiert nicht für Benutzer @%s",
+		"Wishlist does not exist for user %s": {
+			"en": "Wishlist does not exist for user %s",
+			"de": "Wunschlist existiert nicht für Benutzer %s",
 		},
 		"Wish %d does not exist": {
 			"en": "Wish %d does not exist",

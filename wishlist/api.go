@@ -6,7 +6,7 @@ import (
 	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
-func GetWishlist(chatID int64, username Username) (Wishlist, error) {
+func GetWishlist(chatID int64, username string) (Wishlist, error) {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		return nil, err
@@ -15,7 +15,7 @@ func GetWishlist(chatID int64, username Username) (Wishlist, error) {
 	if !ok {
 		return nil, &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: t.G("User @%s has not expressed any wishes yet", string(username)),
+				Msg: t.G("User %s has not expressed any wishes yet", string(username)),
 				Err: nil,
 			},
 		}
@@ -23,14 +23,14 @@ func GetWishlist(chatID int64, username Username) (Wishlist, error) {
 	return wishlist, nil
 }
 
-func AddWish(chatID int64, username Username, wish *Wish) error {
+func AddWish(chatID int64, username string, wish *Wish) error {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		var e *NoDatabaseForChatError
 		if errors.As(err, &e) { // create a new DB file if it does not exist already
 			db = &chatDBFile{
 				ChatID: chatID,
-				Wishes: make(map[Username]Wishlist),
+				Wishes: make(map[string]Wishlist),
 			}
 		} else {
 			return err
@@ -43,7 +43,7 @@ func AddWish(chatID int64, username Username, wish *Wish) error {
 	return nil
 }
 
-func FulfillWish(chatID int64, username Username, wishID int) error {
+func FulfillWish(chatID int64, username string, wishID int) error {
 	if wishID < 1 {
 		return &WishIDInvalidError{
 			GenericWishlistError{
@@ -62,7 +62,7 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	if !ok {
 		return &NoWishesForUserError{
 			GenericWishlistError{
-				Msg: t.G("Wishlist does not exist for user @%s", string(username)),
+				Msg: t.G("Wishlist does not exist for user %s", username),
 			},
 		}
 	}
@@ -88,12 +88,12 @@ func FulfillWish(chatID int64, username Username, wishID int) error {
 	return nil
 }
 
-func GetUsersWithWishes(chatID int64) ([]Username, error) {
+func GetUsersWithWishes(chatID int64) ([]string, error) {
 	db, err := loadChatDBFile(chatID)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]Username, 0)
+	users := make([]string, 0)
 	for user := range db.Wishes {
 		users = append(users, user)
 	}

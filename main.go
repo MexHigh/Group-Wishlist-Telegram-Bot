@@ -83,16 +83,16 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	switch commandName {
 	case CommandWishlist: // callback payload format: username
-		wishlist, err := wishlist.GetWishlist(chatID, wishlist.Username(cbDataPayload))
+		wishlist, err := wishlist.GetWishlist(chatID, cbDataPayload)
 		if err != nil {
 			msg.Text = err.Error()
 		} else {
-			msg.Text = t.G("*Wishlist for @%s*", cbDataPayload) + "\n"
+			msg.Text = t.G("*Wishlist for %s*", cbDataPayload) + "\n"
 			msg.Text += wishlist.String()
 		}
 	case CommandFulfill: // callback payload format: username.wishID
 		split := strings.Split(cbDataPayload, ".")
-		username := wishlist.Username(split[0])
+		username := split[0]
 		wishID, err := strconv.Atoi(split[1])
 		if err != nil {
 			msg.Text = err.Error()
@@ -119,7 +119,7 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	chatID := update.Message.Chat.ID
-	username := wishlist.Username(update.Message.From.UserName)
+	username := firstAccountInfoAvailable(update.Message.From)
 	msg := tgbotapi.NewMessage(chatID, "")
 	msg.ParseMode = tgbotapi.ModeMarkdown
 

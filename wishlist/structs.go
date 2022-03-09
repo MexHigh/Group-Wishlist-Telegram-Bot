@@ -13,8 +13,6 @@ import (
 	t "git.leon.wtf/leon/group-wishlist-telegram-bot/translator"
 )
 
-type Username string
-
 type Wish struct {
 	WishedAt  time.Time `json:"wished_at"`
 	Wish      string    `json:"wish"`
@@ -35,8 +33,8 @@ func (w *Wishlist) String() (s string) {
 }
 
 type chatDBFile struct {
-	ChatID int64                 `json:"group_id"`
-	Wishes map[Username]Wishlist `json:"wishes"`
+	ChatID int64               `json:"group_id"`
+	Wishes map[string]Wishlist `json:"wishes"`
 }
 
 func (db *chatDBFile) Save() error {

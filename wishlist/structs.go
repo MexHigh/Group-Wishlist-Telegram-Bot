@@ -42,7 +42,9 @@ type chatDBFile struct {
 func (db *chatDBFile) Save() error {
 	f := strconv.FormatInt(db.ChatID, 10) + ".json"
 	f = strings.ReplaceAll(f, "-", "m") // replace negative sign with 'm'
-	p := path.Join("db", f)
+	dir := "db"
+	fullPath := path.Join(dir, f)
+
 	jsonBytes, err := json.MarshalIndent(*db, "", "    ")
 	if err != nil {
 		return &InternalError{
@@ -51,7 +53,14 @@ func (db *chatDBFile) Save() error {
 			},
 		}
 	}
-	if err := os.WriteFile(p, jsonBytes, 0644); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil { // ensure the directory exists
+		return &InternalError{
+			GenericWishlistError{
+				Err: err,
+			},
+		}
+	}
+	if err := os.WriteFile(fullPath, jsonBytes, 0644); err != nil {
 		return &InternalError{
 			GenericWishlistError{
 				Err: err,
@@ -64,8 +73,10 @@ func (db *chatDBFile) Save() error {
 func loadChatDBFile(chatID int64) (*chatDBFile, error) {
 	f := strconv.FormatInt(chatID, 10) + ".json"
 	f = strings.ReplaceAll(f, "-", "m") // replace negative sign with 'm'
-	p := path.Join("db", f)
-	jsonFile, err := os.Open(p)
+	dir := "db"
+	fullPath := path.Join(dir, f)
+
+	jsonFile, err := os.Open(fullPath)
 	if err != nil {
 		return nil, &NoDatabaseForChatError{
 			GenericWishlistError{

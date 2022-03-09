@@ -1,0 +1,13 @@
+# Docker stuff
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Git(lab) stuff
+.gitignore
+.gitlab-ci.yml
+README.md
+
+# Other
+config.json
+db

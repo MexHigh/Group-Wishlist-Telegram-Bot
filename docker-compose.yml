@@ -1,0 +1,14 @@
+version: '3'
+services:
+  
+  group-wishlist-telegram-bot:
+    image: registry.git.leon.wtf/leon/group-wishlist-telegram-bot:latest
+    container_name: group-wishlist-telegram-bot
+    restart: on-failure
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./db:/app/db
+    environment:
+      TZ: Europe/Berlin
+    # --language can be 'de' or 'en'
+    command: --language 'de'
